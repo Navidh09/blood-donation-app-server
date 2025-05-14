@@ -4,6 +4,7 @@ require("dotenv").config();
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const app = express();
 var morgan = require("morgan");
+const { ObjectId } = require("mongodb");
 const port = process.env.PORT || 5000;
 
 app.use(cors());
@@ -24,7 +25,11 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     const usersCollection = client.db("vital-drops").collection("users");
+    const donationRequestsCollection = client
+      .db("vital-drops")
+      .collection("donationRequests");
 
+    // users related apis
     app.post("/users", async (req, res) => {
       const user = req.body;
       const result = await usersCollection.insertOne(user);
@@ -43,6 +48,61 @@ async function run() {
       if (bloodGroup) query.bloodGroup = bloodGroup;
 
       const result = await usersCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // donation-requests related apis
+    app.post("/donation-requests", async (req, res) => {
+      const request = req.body;
+      request.status = request.status || "pending";
+      const result = await donationRequestsCollection.insertOne(request);
+      res.send(result);
+    });
+
+    app.get("/donation-requests", async (req, res) => {
+      const { status } = req.query;
+
+      const query = {};
+      if (status) query.status = status;
+
+      const result = await donationRequestsCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.get("/donation-requests/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await donationRequestsCollection.findOne({
+        _id: new ObjectId(id),
+      });
+
+      res.send(result);
+    });
+
+    app.get("/donation-requests/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await donationRequestsCollection.findOne({
+        _id: new ObjectId(id),
+      });
+      res.send(result);
+    });
+
+    app.patch("/donation-requests/:id", async (req, res) => {
+      const id = req.params.id;
+      const { status, donorName, donorEmail } = req.body;
+
+      const updateDoc = {
+        $set: {
+          status,
+          donorName,
+          donorEmail,
+        },
+      };
+
+      const result = await donationRequestsCollection.updateOne(
+        { _id: new ObjectId(id) },
+        updateDoc
+      );
+
       res.send(result);
     });
 
