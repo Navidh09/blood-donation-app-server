@@ -23,6 +23,29 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
+    const usersCollection = client.db("vital-drops").collection("users");
+
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
+
+    app.get("/users", async (req, res) => {
+      const { district, upazila, bloodGroup } = req.query;
+
+      const query = {
+        role: "Donor",
+      };
+
+      if (district) query.district = district;
+      if (upazila) query.upazila = upazila;
+      if (bloodGroup) query.bloodGroup = bloodGroup;
+
+      const result = await usersCollection.find(query).toArray();
+      res.send(result);
+    });
+
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
     // Send a ping to confirm a successful connection
