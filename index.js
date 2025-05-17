@@ -30,9 +30,12 @@ async function run() {
       .collection("donationRequests");
 
     // users related apis
-    app.post("/users", async (req, res) => {
-      const user = req.body;
-      const result = await usersCollection.insertOne(user);
+    app.post("/blogs", async (req, res) => {
+      const newBlog = {
+        ...req.body,
+        createdAt: new Date(),
+      };
+      const result = await blogsCollection.insertOne(newBlog);
       res.send(result);
     });
 
@@ -204,6 +207,23 @@ async function run() {
       );
 
       res.send(result);
+    });
+
+    app.get("/my-donation-requests/user/:email", async (req, res) => {
+      const { email } = req.params;
+      const { status } = req.query;
+
+      const query = { email };
+      if (status) {
+        query.status = status;
+      }
+
+      const requests = await donationRequestsCollection
+        .find(query)
+        .sort({ createdAt: -1 })
+        .toArray();
+
+      res.send(requests);
     });
 
     // Connect the client to the server	(optional starting in v4.7)
